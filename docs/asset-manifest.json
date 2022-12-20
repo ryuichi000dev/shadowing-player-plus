@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/shadowing-player-plus/static/css/main.beb77182.css",
+    "main.js": "/shadowing-player-plus/static/js/main.678458e9.js",
+    "static/js/787.b94ca096.chunk.js": "/shadowing-player-plus/static/js/787.b94ca096.chunk.js",
+    "index.html": "/shadowing-player-plus/index.html",
+    "main.beb77182.css.map": "/shadowing-player-plus/static/css/main.beb77182.css.map",
+    "main.678458e9.js.map": "/shadowing-player-plus/static/js/main.678458e9.js.map",
+    "787.b94ca096.chunk.js.map": "/shadowing-player-plus/static/js/787.b94ca096.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.beb77182.css",
+    "static/js/main.678458e9.js"
+  ]
+}
