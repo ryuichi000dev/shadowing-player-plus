@@ -213,7 +213,7 @@ export default function MusicPlayerSlider() {
     return new Promise(function (resolve) {
       setTimeout(function () {
         resolve();
-      }, waitSec + 200);
+      }, waitSec + 50);
     });
   };
 
@@ -359,15 +359,15 @@ export default function MusicPlayerSlider() {
   }, [loadedFlg]);
 
   const [playList, setPlayList] = useState([
-    { name: "curry.mp3", path: "./audiomaterial/curry.mp3" },
+    { name: "excuse-me.mp3", path: "./audiomaterial/excuse-me.mp3" },
   ]);
   const [teachingAudio, setTeachingAudio] = useState({
-    name: "curry.mp3",
-    path: "./audiomaterial/curry.mp3",
+    name: "excuse-me.mp3",
+    path: "./audiomaterial/excuse-me.mp3",
   });
   const [sampleAudio, setSampleAudio] = useState({
-    name: "curry.mp3",
-    path: "./audiomaterial/curry.mp3",
+    name: "excuse-me.mp3",
+    path: "./audiomaterial/excuse-me.mp3",
   });
 
   const selectFiles = (e) => {

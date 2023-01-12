@@ -13,7 +13,7 @@ function App() {
       {/*<Main />*/}
       <Test />
       {/*<AudioRecorder />*/}
-      <Footer />
+      {/*<Footer />*/}
     </div>
   );
 }
