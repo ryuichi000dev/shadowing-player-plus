@@ -64,7 +64,7 @@ export default function MusicPlayerSlider() {
   //let startTime
   let stopTime, recordingTime;
   let playTimer;
-  const [repeatingTimes, setRepeatingTimes] = useState(2);
+  const [repeatingCount, setRepeatingCount] = useState(2);
   const [startTime, setStartTime] = useState();
   //const [stopTime, setStopTime] = useState();
   //const [recordingTime, setRecordingTime] = useState();
@@ -80,6 +80,8 @@ export default function MusicPlayerSlider() {
   const [recAudioVolume, setRecAudioVolume] = useState(30);
 
   const [isLastPlaying, setIsLastPlaying] = useState(false);
+
+  const [recTimeLength, setRecTimeLength] = useState(1);
 
   useEffect(() => {
     //mimeTypeの確認
@@ -185,7 +187,7 @@ export default function MusicPlayerSlider() {
   const stopTimer = () => {
     stopTime = teachingAudioRef.current.currentTime;
     setEndPosition(stopTime);
-    recordingTime = (teachingAudioRef.current.currentTime - startTime) * 1000; //sleepと単位を合わせるために*1000
+    recordingTime = ((teachingAudioRef.current.currentTime - startTime) * 1000) * recTimeLength; //sleepと単位を合わせるために*1000
     clearInterval(playTimer);
   };
   /*
@@ -243,7 +245,7 @@ export default function MusicPlayerSlider() {
       }`
     );
     //2回目以降のリピート
-    for (let i = 1; i < repeatingTimes; i++) {
+    for (let i = 1; i < repeatingCount; i++) {
       console.log(`${i + 1}回目のリピート!!`);
       teachingAudioRef.current.currentTime = startTime;
       await lastPlayStart();
@@ -292,9 +294,13 @@ export default function MusicPlayerSlider() {
   }, [teachingAudioPath]);
 
   //リピート回数を変更・反映
-  const repeatingTimesChange = (e) => {
-    setRepeatingTimes(e.target.value);
+  const repeatingCountChange = (e) => {
+    setRepeatingCount(e.target.value);
   };
+  //録音時間を変更
+  const recTimeLengthChange = (e) => {
+    setRecTimeLength(e.target.value);
+  }
 
   //次の曲・前の曲へ
   const goNextAudio = () => {
@@ -352,6 +358,7 @@ export default function MusicPlayerSlider() {
   ];
 
   function formatDuration(value) {
+    console.log('format');
     const minute = Math.floor(value / 60);
     const secondLeft = Math.ceil(value - minute * 60);
     return `${minute}:${secondLeft < 10 ? `0${secondLeft}` : secondLeft}`;
@@ -376,10 +383,10 @@ export default function MusicPlayerSlider() {
             letterSpacing={-0.25}
             sx={{ margin: "auto", textAlign: "center" }}
           >
-            {teachingAudioName || "curry.mp3"}
+            {teachingAudioName || "excuseme.mp3"}
           </Typography>
         </Box>
-        <Box></Box>
+        
 
         <Box
           sx={{
@@ -553,9 +560,9 @@ export default function MusicPlayerSlider() {
           <Select
             labelId="repeatTimes"
             id="repeatTimes"
-            value={repeatingTimes}
+            value={repeatingCount}
             label="repeat"
-            onChange={repeatingTimesChange}
+            onChange={repeatingCountChange}
             disabled={isLastPlaying ? true : false}
           >
             <MenuItem value={1}>1</MenuItem>
@@ -564,6 +571,28 @@ export default function MusicPlayerSlider() {
             <MenuItem value={4}>4</MenuItem>
             <MenuItem value={5}>5</MenuItem>
             <MenuItem value={10}>10</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
+          <InputLabel id="recTimeLength">録音時間</InputLabel>
+          <Select
+            labelId="recTimeLength"
+            id="recTimeLength"
+            value={recTimeLength}
+            label="repeat"
+            onChange={recTimeLengthChange}
+            disabled={isLastPlaying ? true : false}
+          >
+            <MenuItem value={0.7}>× 0.7</MenuItem>
+            <MenuItem value={0.8}>× 0.8</MenuItem>
+            <MenuItem value={0.9}>× 0.9</MenuItem>
+            <MenuItem value={1.0}>× 1.0</MenuItem>
+            <MenuItem value={1.1}>× 1.1</MenuItem>
+            <MenuItem value={1.2}>× 1.2</MenuItem>
+            <MenuItem value={1.3}>× 1.3</MenuItem>
+            <MenuItem value={1.4}>× 1.4</MenuItem>
+            <MenuItem value={1.5}>× 1.5</MenuItem>
           </Select>
         </FormControl>
 
@@ -600,11 +629,12 @@ export default function MusicPlayerSlider() {
 
       <audio
         id="teachingAudio"
-        src={teachingAudioPath || "./audiomaterial/curry.mp3"}
+        src={teachingAudioPath || "./audiomaterial/excuseme.mp3"}
         onLoadedMetadata={settingTime}
         ref={teachingAudioRef}
       ></audio>
       <audio id="recAudio"></audio>
+      <audio src="./curry.mp3" controls></audio>
     </Box>
   );
 }

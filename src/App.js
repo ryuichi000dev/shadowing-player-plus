@@ -1,12 +1,19 @@
 import './App.css';
 import Main from './components/Main';
-import Test from './test/Test';
+import Navbar from './components/Navbar';
+import Test from './components/Test';
+import AudioRecorder from './components/AudioRecorder';
+import Footer from './components/Footer';
+
 
 function App() {
   return (
     <div className="App">
-      <Main />
-      {/*<Test />*/}
+      <Navbar />
+      {/*<Main />*/}
+      <Test />
+      {/*<AudioRecorder />*/}
+      <Footer />
     </div>
   );
 }
