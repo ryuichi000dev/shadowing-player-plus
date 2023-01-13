@@ -165,17 +165,9 @@ export default function MusicPlayerSlider() {
         audio: true,
       })
       .then(function (stream) {
-        if (MediaRecorder.isTypeSupported("audio/webm")) {
-          console.log("support audio/webm !")
-          recAudioRef.current = new MediaRecorder(stream, {
-            mimeType: "audio/webm",
-          });
-        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          console.log("support audio/mp4 !");
-          recAudioRef.current = new MediaRecorder(stream, {
-            mimeType: "audio/mp4",
-          });
-        }
+        recAudioRef.current = new MediaRecorder(stream, {
+          mimeType: "audio/webm",
+        });
         // 音声データを貯める場所
         let chunks = [];
         // 録音が終わった後のデータをまとめる
@@ -221,7 +213,7 @@ export default function MusicPlayerSlider() {
     return new Promise(function (resolve) {
       setTimeout(function () {
         resolve();
-      }, waitSec + 100);
+      }, waitSec + 200);
     });
   };
 
