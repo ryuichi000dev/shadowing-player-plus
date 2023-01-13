@@ -165,9 +165,17 @@ export default function MusicPlayerSlider() {
         audio: true,
       })
       .then(function (stream) {
-        recAudioRef.current = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
-        });
+        if (MediaRecorder.isTypeSupported("audio/webm")) {
+          console.log("support audio/webm !")
+          recAudioRef.current = new MediaRecorder(stream, {
+            mimeType: "audio/webm",
+          });
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          console.log("support audio/mp4 !");
+          recAudioRef.current = new MediaRecorder(stream, {
+            mimeType: "audio/mp4",
+          });
+        }
         // 音声データを貯める場所
         let chunks = [];
         // 録音が終わった後のデータをまとめる
@@ -213,7 +221,7 @@ export default function MusicPlayerSlider() {
     return new Promise(function (resolve) {
       setTimeout(function () {
         resolve();
-      }, waitSec + 50);
+      }, waitSec + 100);
     });
   };
 
@@ -359,15 +367,15 @@ export default function MusicPlayerSlider() {
   }, [loadedFlg]);
 
   const [playList, setPlayList] = useState([
-    { name: "excuse-me.mp3", path: "./audiomaterial/excuse-me.mp3" },
+    { name: "curry.mp3", path: "./audiomaterial/curry.mp3" },
   ]);
   const [teachingAudio, setTeachingAudio] = useState({
-    name: "excuse-me.mp3",
-    path: "./audiomaterial/excuse-me.mp3",
+    name: "curry.mp3",
+    path: "./audiomaterial/curry.mp3",
   });
   const [sampleAudio, setSampleAudio] = useState({
-    name: "excuse-me.mp3",
-    path: "./audiomaterial/excuse-me.mp3",
+    name: "curry.mp3",
+    path: "./audiomaterial/curry.mp3",
   });
 
   const selectFiles = (e) => {
