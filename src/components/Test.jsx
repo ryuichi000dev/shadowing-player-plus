@@ -159,21 +159,32 @@ export default function MusicPlayerSlider() {
           }
         : null);
 
+    let mimeType = '';
+
     mediaDevices
       .getUserMedia({
         video: false,
         audio: true,
       })
       .then(function (stream) {
-        recAudioRef.current = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
-        });
+        if (MediaRecorder.isTypeSupported("audio/webm")) {
+          console.log("support audio/webm !")
+          recAudioRef.current = new MediaRecorder(stream, {
+            mimeType: "audio/webm",
+          });
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          console.log("support audio/mp4 !");
+          recAudioRef.current = new MediaRecorder(stream, {
+            mimeType: "audio/mp4",
+          });
+        }
         // 音声データを貯める場所
         let chunks = [];
         // 録音が終わった後のデータをまとめる
         recAudioRef.current.addEventListener("dataavailable", (ele) => {
           if (ele.data.size > 0) {
             chunks.push(ele.data);
+            mimeType = ele.data.type;
           }
           // 音声データをセット
         });
@@ -183,7 +194,8 @@ export default function MusicPlayerSlider() {
         });
         // 録音がストップしたらchunkを空にして、録音状態を更新
         recAudioRef.current.addEventListener("stop", () => {
-          const blob = new Blob(chunks /*, 'type': mimeType }*/);
+          console.log(mimeType);
+          const blob = new Blob(chunks, {'type': mimeType });
           setAudioState(true);
           chunks = [];
           const recAudio = document.querySelector("#recAudio");
@@ -213,7 +225,7 @@ export default function MusicPlayerSlider() {
     return new Promise(function (resolve) {
       setTimeout(function () {
         resolve();
-      }, waitSec + 200);
+      }, waitSec + 100);
     });
   };
 
@@ -471,6 +483,13 @@ export default function MusicPlayerSlider() {
     newPlayList.splice(index, 1);
     setPlayList(newPlayList);
   };
+
+  const handleAudioPlay = () => {
+    const recAudio = document.querySelector("#recAudio");
+    console.dir(recAudio);
+    recAudio.load();
+    recAudio.play();
+  }
 
   //UI
   const theme = useTheme();
