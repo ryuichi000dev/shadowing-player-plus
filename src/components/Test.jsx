@@ -272,7 +272,7 @@ export default function MusicPlayerSlider() {
 
   const recording = async () => {
     setLastPlayStatus("Recording");
-    await sleep(300);
+    await sleep(200);
     SE1Ref.current.play();
     await sleep(1000);
     recorderRef.current.start();
@@ -282,7 +282,7 @@ export default function MusicPlayerSlider() {
 
   const feedbacking = async () => {
     setLastPlayStatus("Feedbacking");
-    await sleep(300);
+    await sleep(200);
     SE2Ref.current.play();
     await sleep(1000);
     const recAudio = document.querySelector("#recAudio");
