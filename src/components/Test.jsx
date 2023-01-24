@@ -106,7 +106,7 @@ export default function MusicPlayerSlider() {
   const inputRef = useRef(null);
 
   let playTimer; //インターバル用の変数
-  const [repeatingCount, setRepeatingCount] = useState(2);
+  const [repeatingCount, setRepeatingCount] = useState(3);
   const [startTime, setStartTime] = useState();
   const [stopTime, setStopTime] = useState();
   const [recordingTime, setRecordingTime] = useState();
@@ -225,7 +225,7 @@ export default function MusicPlayerSlider() {
     return new Promise(function (resolve) {
       setTimeout(function () {
         resolve();
-      }, waitSec + 100);
+      }, waitSec);
     });
   };
 
@@ -378,15 +378,15 @@ export default function MusicPlayerSlider() {
   }, [loadedFlg]);
 
   const [playList, setPlayList] = useState([
-    { name: "curry.mp3", path: "./audiomaterial/curry.mp3" },
+    { name: "excuse-me.mp3", path: "./audiomaterial/excuse-me.mp3" },
   ]);
   const [teachingAudio, setTeachingAudio] = useState({
-    name: "curry.mp3",
-    path: "./audiomaterial/curry.mp3",
+    name: "excuse-me.mp3",
+    path: "./audiomaterial/excuse-me.mp3",
   });
   const [sampleAudio, setSampleAudio] = useState({
-    name: "curry.mp3",
-    path: "./audiomaterial/curry.mp3",
+    name: "excuse-me.mp3",
+    path: "./audiomaterial/excuse-me.mp3",
   });
 
   const handleInputAudio = (e) => {
@@ -876,7 +876,7 @@ export default function MusicPlayerSlider() {
         ref={teachingAudioRef}
         volume={0.4}
       ></audio>
-      <audio id="recAudio" controls></audio>
+      <audio id="recAudio"></audio>
     </Box>
   );
 }
