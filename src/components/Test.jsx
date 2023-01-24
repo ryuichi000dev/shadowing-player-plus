@@ -122,6 +122,10 @@ export default function MusicPlayerSlider() {
 
   const [recTimeLength, setRecTimeLength] = useState(1.2);
 
+  const SE1Ref = useRef();
+  const SE2Ref = useRef();
+
+
   useEffect(() => {
     //mimeTypeの確認
     /*
@@ -269,6 +273,8 @@ export default function MusicPlayerSlider() {
   const recording = async () => {
     setLastPlayStatus("Recording");
     await sleep(500);
+    SE1Ref.current.play();
+    await sleep(1000);
     recorderRef.current.start();
     await sleep(recordingTime);
     recorderRef.current.stop();
@@ -277,6 +283,8 @@ export default function MusicPlayerSlider() {
   const feedbacking = async () => {
     setLastPlayStatus("Feedbacking");
     await sleep(500);
+    SE2Ref.current.play();
+    await sleep(1000);
     const recAudio = document.querySelector("#recAudio");
     recAudio.load();
     recAudio.play();
@@ -877,6 +885,16 @@ export default function MusicPlayerSlider() {
         volume={0.4}
       ></audio>
       <audio id="recAudio"></audio>
+      <audio
+        id="SE1"
+        src="./audiomaterial/Onoma-Pop03-3(Low).mp3"
+        ref={SE1Ref}
+      ></audio>
+      <audio
+        id="SE2"
+        src="./audiomaterial/Onoma-Pop03-1(High).mp3"
+        ref={SE2Ref}
+      ></audio>
     </Box>
   );
 }
