@@ -101,7 +101,7 @@ export default function MusicPlayerSlider() {
   //-----------------Testing--------------------
 
   const [audioState, setAudioState] = useState(true);
-  const recAudioRef = useRef();
+  const recorderRef = useRef();
   const teachingAudioRef = useRef();
   const inputRef = useRef(null);
 
@@ -120,7 +120,7 @@ export default function MusicPlayerSlider() {
   const [isLastPlaying, setIsLastPlaying] = useState(false);
   const [LastPlayStatus, setLastPlayStatus] = useState("Listening");
 
-  const [recTimeLength, setRecTimeLength] = useState(1);
+  const [recTimeLength, setRecTimeLength] = useState(1.2);
 
   useEffect(() => {
     //mimeTypeの確認
@@ -169,19 +169,19 @@ export default function MusicPlayerSlider() {
       .then(function (stream) {
         if (MediaRecorder.isTypeSupported("audio/webm")) {
           console.log("support audio/webm !")
-          recAudioRef.current = new MediaRecorder(stream, {
+          recorderRef.current = new MediaRecorder(stream, {
             mimeType: "audio/webm",
           });
         } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
           console.log("support audio/mp4 !");
-          recAudioRef.current = new MediaRecorder(stream, {
+          recorderRef.current = new MediaRecorder(stream, {
             mimeType: "audio/mp4",
           });
         }
         // 音声データを貯める場所
         let chunks = [];
         // 録音が終わった後のデータをまとめる
-        recAudioRef.current.addEventListener("dataavailable", (ele) => {
+        recorderRef.current.addEventListener("dataavailable", (ele) => {
           if (ele.data.size > 0) {
             chunks.push(ele.data);
             mimeType = ele.data.type;
@@ -189,11 +189,11 @@ export default function MusicPlayerSlider() {
           // 音声データをセット
         });
         // 録音を開始したら状態を変える
-        recAudioRef.current.addEventListener("start", () => {
+        recorderRef.current.addEventListener("start", () => {
           setAudioState(false);
         });
         // 録音がストップしたらchunkを空にして、録音状態を更新
-        recAudioRef.current.addEventListener("stop", () => {
+        recorderRef.current.addEventListener("stop", () => {
           console.log(mimeType);
           const blob = new Blob(chunks, {'type': mimeType });
           setAudioState(true);
@@ -212,12 +212,12 @@ export default function MusicPlayerSlider() {
 
   // 録音開始
   const handleRecStart = () => {
-    recAudioRef.current.start();
+    recorderRef.current.start();
   };
 
   // 録音停止
   const handleRecStop = () => {
-    recAudioRef.current.stop();
+    recorderRef.current.stop();
   };
 
   //sleep機能
@@ -233,7 +233,6 @@ export default function MusicPlayerSlider() {
 
   const [LastPlayFlg, setLastPlayFlg] = useState(false);
   const [ReLastPlayingFlg, setReLastPlayFlg] = useState(false);
-  const [isFirstLastPlaying, setIsFirstLastPlaying] = useState(true);
   const [isReLastPlaying, setIsReLastPlaying] = useState(false);
 
   const startTimer = () => {
@@ -270,9 +269,9 @@ export default function MusicPlayerSlider() {
   const recording = async () => {
     setLastPlayStatus("Recording");
     await sleep(500);
-    handleRecStart();
+    recorderRef.current.start();
     await sleep(recordingTime);
-    handleRecStop();
+    recorderRef.current.stop();
   };
 
   const feedbacking = async () => {
@@ -287,7 +286,8 @@ export default function MusicPlayerSlider() {
   };
 
   const lastPlay = async () => {
-    setIsFirstLastPlaying(false);
+    const recAudio = document.querySelector("#recAudio");
+    recAudio.load();
     await recording();
     await feedbacking();
     for (let i = 1; i < repeatingCount; i++) {
@@ -326,11 +326,16 @@ export default function MusicPlayerSlider() {
     }
   }, [LastPlayFlg]);
 
+
+  //reLastPlay
   const handleReLastPlay = () => {
-    setStartTime(startPosition);
-    setIsLastPlaying(true);
-    setIsReLastPlaying(true);
-    setReLastPlayFlg(true);
+    if (endPosition - startPosition !==  0) {
+      setStartTime(startPosition);
+      setRecordingTime(prev => prev * recTimeLength);
+      setIsLastPlaying(true);
+      setIsReLastPlaying(true);
+      setReLastPlayFlg(true);
+    }
   };
 
   const reLastPlay = async () => {
@@ -351,6 +356,8 @@ export default function MusicPlayerSlider() {
   }, [ReLastPlayingFlg]);
 
   //-----LastPlay部分おわり-----
+
+
 
   //音源の時間を取得(audioタグのonLoadedMetaDataから副作用で呼び出し)
   const settingTime = () => {
@@ -382,7 +389,7 @@ export default function MusicPlayerSlider() {
     path: "./audiomaterial/curry.mp3",
   });
 
-  const selectFiles = (e) => {
+  const handleInputAudio = (e) => {
     const files = e.target.files;
     const newAudios = [...playList];
     for (let i = 0; i < files.length; i++) {
@@ -398,6 +405,41 @@ export default function MusicPlayerSlider() {
   useEffect(() => {
     setTeachingAudio(playList[0]);
   }, [playList]);
+
+  useEffect(() => {
+    //playListが全て消えた時にsample音源を挿入する
+    if (playList.length === 0) {
+      setTeachingAudio({ name: sampleAudio.name, path: sampleAudio.path });
+    } else {
+      setTeachingAudio({
+        name: playList[playListIndex].name,
+        path: playList[playListIndex].path,
+      });
+    }
+  }, [playList, playListIndex]);
+
+
+  //音源を選択し、setする
+  const handleSelectAudio = (index) => {
+    //console.log(duration);
+    console.log("select audio");
+    resetPosition();
+    setTeachingAudio({
+      name: playList[index].name,
+      path: playList[index].path,
+    });
+    setPlayListIndex(index);
+  };
+
+  //音源をデリートする
+  const handleDeleteAudio = (index) => {
+    console.log("delete audio");
+    const newPlayList = [...playList];
+    window.URL.revokeObjectURL(playList[index].path);
+    newPlayList.splice(index, 1);
+    setPlayList(newPlayList);
+  };
+
 
   const resetPosition = () => {
     setStartPosition(0);
@@ -424,18 +466,7 @@ export default function MusicPlayerSlider() {
     }
   };
 
-  useEffect(() => {
-    //playListが全て消えた時にsample音源を挿入する
-    if (playList.length === 0) {
-      setTeachingAudio({ name: sampleAudio.name, path: sampleAudio.path });
-    } else {
-      setTeachingAudio({
-        name: playList[playListIndex].name,
-        path: playList[playListIndex].path,
-      });
-    }
-  }, [playList, playListIndex]); //カーソル動いたら反映？
-
+  
   //リピート回数を変更・反映
   const repeatingCountChange = (e) => {
     setRepeatingCount(e.target.value);
@@ -464,31 +495,20 @@ export default function MusicPlayerSlider() {
     setEndPosition(newValue);
   };
 
-  //音源を選択し、setする
-  const handleSelectAudio = (index) => {
-    //console.log(duration);
-    console.log("select audio");
-    setTeachingAudio({
-      name: playList[index].name,
-      path: playList[index].path,
-    });
-    setPlayListIndex(index);
-  };
-
-  //音源をデリートする
-  const handleDeleteAudio = (index) => {
-    console.log("delete audio");
-    const newPlayList = [...playList];
-    window.URL.revokeObjectURL(playList[index].path);
-    newPlayList.splice(index, 1);
-    setPlayList(newPlayList);
-  };
-
+  
   const handleAudioPlay = () => {
     const recAudio = document.querySelector("#recAudio");
     console.dir(recAudio);
     recAudio.load();
     recAudio.play();
+  }
+
+  //教材音声が終了した時の処理
+  const handleEnded = () => {
+    if (isLastPlaying) {
+      handleLastPlayStop();
+      setPaused(!paused);
+    }
   }
 
   //UI
@@ -643,7 +663,7 @@ export default function MusicPlayerSlider() {
           <IconButton
             aria-label="repeat Last Play"
             onClick={handleReLastPlay}
-            disabled={isLastPlaying || isFirstLastPlaying ? true : false}
+            disabled={isLastPlaying ? true : false}
           >
             <LoopIcon fontSize="large" htmlColor={mainIconColor} />
           </IconButton>
@@ -682,6 +702,7 @@ export default function MusicPlayerSlider() {
             <FastForwardRounded fontSize="large" htmlColor={mainIconColor} />
           </IconButton>
         </Box>
+        {/*<button onClick={handleAudioPlay}>start</button>*/}
         <Stack
           spacing={2}
           direction="row"
@@ -813,7 +834,7 @@ export default function MusicPlayerSlider() {
             accept="audio/*"
             multiple
             type="file"
-            onChange={selectFiles}
+            onChange={handleInputAudio}
             ref={inputRef}
           />
         </Button>
@@ -850,11 +871,12 @@ export default function MusicPlayerSlider() {
       <audio
         id="teachingAudio"
         onLoadedMetadata={handleLoaded}
+        onEnded={handleEnded}
         src={teachingAudio.path}
         ref={teachingAudioRef}
         volume={0.4}
       ></audio>
-      <audio id="recAudio"></audio>
+      <audio id="recAudio" controls></audio>
     </Box>
   );
 }
