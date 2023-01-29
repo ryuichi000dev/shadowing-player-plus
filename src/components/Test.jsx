@@ -839,7 +839,6 @@ export default function MusicPlayerSlider() {
           教材を選択
           <input
             hidden
-            accept="audio/*"
             multiple
             type="file"
             onChange={handleInputAudio}
