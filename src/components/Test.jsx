@@ -114,8 +114,8 @@ export default function MusicPlayerSlider() {
 
   const [playListIndex, setPlayListIndex] = useState(0);
 
-  const [teachingAudioVolume, setTeachingAudioVolume] = useState(30);
-  const [recAudioVolume, setRecAudioVolume] = useState(30);
+  const [teachingAudioVolume, setTeachingAudioVolume] = useState(100);
+  const [recAudioVolume, setRecAudioVolume] = useState(100);
 
   const [isLastPlaying, setIsLastPlaying] = useState(false);
   const [LastPlayStatus, setLastPlayStatus] = useState("Listening");
@@ -208,6 +208,7 @@ export default function MusicPlayerSlider() {
       })
       .catch(function (err) {
         console.log(err);
+        alert("マイクに接続できませんでした。デバイスとブラウザの設定を確認してください");
       });
 
     // teachingAudioRef.current.src = "./audiomaterial/excuseme.mp3";
@@ -401,10 +402,14 @@ export default function MusicPlayerSlider() {
     const files = e.target.files;
     const newAudios = [...playList];
     for (let i = 0; i < files.length; i++) {
-      newAudios.push({
-        name: files[i].name,
-        path: URL.createObjectURL(files[i]),
-      });
+      if(!files[i].type.match("audio.*")) {
+        alert(`${files[i].name}は音声ファイルではありません。音声ファイルを選択してください`)
+      } else {
+        newAudios.push({
+          name: files[i].name,
+          path: URL.createObjectURL(files[i]),
+        });
+      }
     }
     setPlayList(newAudios);
   };
@@ -487,12 +492,12 @@ export default function MusicPlayerSlider() {
   //音量変更
   const handleTeachingAudioVolume = (event, newValue) => {
     setTeachingAudioVolume(newValue);
-    teachingAudioRef.current.volume = teachingAudioVolume / 100;
+    teachingAudioRef.current.volume = newValue / 100;
   };
   const handleRecAudioVolume = (event, newValue) => {
     setRecAudioVolume(newValue);
     const recAudio = document.querySelector("#recAudio"); //----!!!!-----
-    recAudio.volume = recAudioVolume / 100;
+    recAudio.volume = newValue / 100;
   };
 
   //Slider操作
@@ -881,9 +886,9 @@ export default function MusicPlayerSlider() {
         onEnded={handleEnded}
         src={teachingAudio.path}
         ref={teachingAudioRef}
-        volume={0.4}
+        volume={teachingAudioVolume/100}
       ></audio>
-      <audio id="recAudio"></audio>
+      <audio id="recAudio" volume={recAudioVolume/100}></audio>
       <audio
         id="SE1"
         src="./audiomaterial/Onoma-Pop03-3(Low).mp3"

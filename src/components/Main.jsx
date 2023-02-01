@@ -12,36 +12,36 @@ import FastForwardRounded from "@mui/icons-material/FastForwardRounded";
 import FastRewindRounded from "@mui/icons-material/FastRewindRounded";
 import VolumeUpRounded from "@mui/icons-material/VolumeUpRounded";
 import VolumeDownRounded from "@mui/icons-material/VolumeDownRounded";
-import AudioFileIcon from "@mui/icons-material/AudioFile";
+import AudiotrackIcon from "@mui/icons-material/Audiotrack";
 import MicOffIcon from "@mui/icons-material/MicOff";
 import MicIcon from "@mui/icons-material/Mic";
 import AddIcon from "@mui/icons-material/Add";
+import LoopIcon from "@mui/icons-material/Loop";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SpatialAudioOffIcon from "@mui/icons-material/SpatialAudioOff";
+import SpatialTrackingIcon from "@mui/icons-material/SpatialTracking";
 import {
+  Avatar,
   Button,
   Divider,
   Fab,
   FormControl,
+  Grid,
   InputLabel,
   List,
   ListItem,
+  ListItemAvatar,
+  ListItemButton,
   ListItemText,
   MenuItem,
   Select,
 } from "@mui/material";
 import "./main.css";
+import { TransitionGroup } from "react-transition-group";
+import { CurrencyYen, VolumeUp } from "@mui/icons-material";
+import { display } from "@mui/system";
+import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
 
-const Widget = styled("div")(({ theme }) => ({
-  padding: 16,
-  borderRadius: 16,
-  width: "80%",
-  maxWidth: "100%",
-  margin: "auto",
-  position: "relative",
-  zIndex: 1,
-  backgroundColor:
-    theme.palette.mode === "dark" ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.4)",
-  backdropFilter: "blur(40px)",
-}));
 
 const TinyText = styled(Typography)({
   fontSize: "0.75rem",
@@ -50,58 +50,68 @@ const TinyText = styled(Typography)({
   letterSpacing: 0.2,
 });
 
+const LastPlayIcon = (props) => {
+  //console.log(props);
+  const LastPlayStatus = props;
+
+  if (LastPlayStatus.props === "Listening") {
+    return (
+      <>
+        <VolumeUp color="primary" sx={{ fontSize: "80px" }} />
+        <SpatialAudioOffIcon sx={{ fontSize: "50px" }} />
+        <SpatialTrackingIcon sx={{ fontSize: "50px" }} />
+      </>
+    );
+  } else if (LastPlayStatus.props === "Recording") {
+    return (
+      <>
+        <VolumeUp sx={{ fontSize: "50px" }} />
+        <SpatialAudioOffIcon color="primary" sx={{ fontSize: "80px" }} />
+        <SpatialTrackingIcon sx={{ fontSize: "50px" }} />
+      </>
+    );
+  } else if (LastPlayStatus.props === "Feedbacking") {
+    return (
+      <>
+        <VolumeUp sx={{ fontSize: "50px" }} />
+        <SpatialAudioOffIcon sx={{ fontSize: "50px" }} />
+        <SpatialTrackingIcon color="primary" sx={{ fontSize: "80px" }} />
+      </>
+    );
+  }
+};
 
 export default function MusicPlayerSlider() {
   //console.log('レンダリングされました！');
 
-  //-----------------Testing--------------------
-
   const [audioState, setAudioState] = useState(true);
-  const audioRef = useRef();
+  const recorderRef = useRef();
   const teachingAudioRef = useRef();
   const inputRef = useRef(null);
 
-  //let startTime
-  let stopTime, recordingTime;
-  let playTimer;
-  const [repeatingCount, setRepeatingCount] = useState(2);
+  let playTimer; //インターバル用の変数
+  const [repeatingCount, setRepeatingCount] = useState(3);
   const [startTime, setStartTime] = useState();
-  //const [stopTime, setStopTime] = useState();
-  //const [recordingTime, setRecordingTime] = useState();
-  const [teachingAudioPath, setTeachingAudioPath] = useState();
-  const [teachingAudioName, setTeachingAudioName] =
-    useState("ファイルを選択してください");
+  const [stopTime, setStopTime] = useState();
+  const [recordingTime, setRecordingTime] = useState();
+  const [ListeningTime, setListeningTime] = useState();
 
-  const [teachingAudioPaths, setTeachingAudioPaths] = useState([]);
-  const [teachingAudioNames, setTeachingAudioNames] = useState([]);
   const [playListIndex, setPlayListIndex] = useState(0);
 
   const [teachingAudioVolume, setTeachingAudioVolume] = useState(30);
   const [recAudioVolume, setRecAudioVolume] = useState(30);
 
   const [isLastPlaying, setIsLastPlaying] = useState(false);
+  const [LastPlayStatus, setLastPlayStatus] = useState("Listening");
 
-  const [recTimeLength, setRecTimeLength] = useState(1);
+  const [recTimeLength, setRecTimeLength] = useState(1.2);
+
+  const SE1Ref = useRef();
+  const SE2Ref = useRef();
+
 
   useEffect(() => {
-    //mimeTypeの確認
-    /*
-    const types = ["video/webm",
-                  "audio/webm",
-                  "video/webm;codecs=vp8",
-                  "video/webm;codecs=daala",
-                  "video/webm;codecs=h264",
-                  "audio/webm;codecs=opus",
-                  "video/mpeg",
-                  "video/webm;codecs=vp9",
-                  "audio/mp4",
-                  "audio/3gpp"];
-
-    for (var i in types) {
-      console.log( types[i] + " をサポートしている？ " + (MediaRecorder.isTypeSupported(types[i]) ? "たぶん！" : "いいえ :("));
-      //alert( types[i] + " をサポートしている？ " + (MediaRecorder.isTypeSupported(types[i]) ? "たぶん！" : "いいえ :("));
-    }
-    */
+    
 
     //マイクへのアクセス権を取得
     const mediaDevices =
@@ -120,84 +130,64 @@ export default function MusicPlayerSlider() {
           }
         : null);
 
+    let mimeType = '';
+
     mediaDevices
       .getUserMedia({
         video: false,
         audio: true,
       })
       .then(function (stream) {
-        audioRef.current = new MediaRecorder(stream, {
-          mimeType: "audio/webm",
-        });
+        if (MediaRecorder.isTypeSupported("audio/webm")) {
+          console.log("support audio/webm !")
+          recorderRef.current = new MediaRecorder(stream, {
+            mimeType: "audio/webm",
+          });
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          console.log("support audio/mp4 !");
+          recorderRef.current = new MediaRecorder(stream, {
+            mimeType: "audio/mp4",
+          });
+        }
         // 音声データを貯める場所
         let chunks = [];
         // 録音が終わった後のデータをまとめる
-        audioRef.current.addEventListener("dataavailable", (ele) => {
+        recorderRef.current.addEventListener("dataavailable", (ele) => {
           if (ele.data.size > 0) {
             chunks.push(ele.data);
+            mimeType = ele.data.type;
           }
           // 音声データをセット
         });
         // 録音を開始したら状態を変える
-        audioRef.current.addEventListener("start", () => {
+        recorderRef.current.addEventListener("start", () => {
           setAudioState(false);
         });
         // 録音がストップしたらchunkを空にして、録音状態を更新
-        audioRef.current.addEventListener("stop", () => {
-          const blob = new Blob(chunks /*, 'type': mimeType }*/);
+        recorderRef.current.addEventListener("stop", () => {
+          console.log(mimeType);
+          const blob = new Blob(chunks, {'type': mimeType });
           setAudioState(true);
           chunks = [];
           const recAudio = document.querySelector("#recAudio");
-          //console.dir(recAudio)
           recAudio.src = window.URL.createObjectURL(blob);
         });
       })
       .catch(function (err) {
         console.log(err);
       });
+
   }, []);
 
   // 録音開始
-  const handleStart = () => {
-    audioRef.current.start();
+  const handleRecStart = () => {
+    recorderRef.current.start();
   };
 
   // 録音停止
-  const handleStop = () => {
-    audioRef.current.stop();
+  const handleRecStop = () => {
+    recorderRef.current.stop();
   };
-
-  //教材音声再生
-  const audioStart = () => {
-    teachingAudioRef.current.play();
-  };
-  const audioStop = () => {
-    teachingAudioRef.current.pause();
-  };
-
-  //音源の時間を取得 => UIに反映
-  const startTimer = () => {
-    setStartTime(teachingAudioRef.current.currentTime);
-    setStartPosition(teachingAudioRef.current.currentTime);
-    setInterval(() => {
-      playTimer = setNowPosition(teachingAudioRef.current.currentTime);
-    }, 100);
-  };
-
-  const stopTimer = () => {
-    stopTime = teachingAudioRef.current.currentTime;
-    setEndPosition(stopTime);
-    recordingTime = ((teachingAudioRef.current.currentTime - startTime) * 1000) * recTimeLength; //sleepと単位を合わせるために*1000
-    clearInterval(playTimer);
-  };
-  /*
-  const stopTimer = () => {
-    setStopTime(teachingAudioRef.current.currentTime);
-    setRecordingTime((teachingAudioRef.current.currentTime - startTime) * 1000); //sleepと単位を合わせるために*1000
-    console.log(teachingAudioRef.current.currentTime);
-    clearInterval(playTimer);
-  };
-  */
 
   //sleep機能
   const sleep = (waitSec) => {
@@ -208,91 +198,248 @@ export default function MusicPlayerSlider() {
     });
   };
 
-  //LastPlay機能
-  const lastPlayStart = () => {
-    audioStart();
-    startTimer();
+  //-----LastPlay部分はじまり-----
+
+  const [LastPlayFlg, setLastPlayFlg] = useState(false);
+  const [ReLastPlayingFlg, setReLastPlayFlg] = useState(false);
+  const [isReLastPlaying, setIsReLastPlaying] = useState(false);
+
+  const startTimer = () => {
+    setStartTime(teachingAudioRef.current.currentTime);
+    setStartPosition(teachingAudioRef.current.currentTime);
+    setEndPosition(teachingAudioRef.current.currentTime);
+    setInterval(() => {
+      playTimer = setNowPosition(teachingAudioRef.current.currentTime);
+    }, 50);
   };
-  const lastPlayStop = async () => {
-    audioStop();
-    stopTimer();
-    await sleep(500); //=====!!!!!=====
-    handleStart(); //録音開始
+
+  const stopTimer = () => {
+    clearInterval(playTimer);
+    const newStopTime = teachingAudioRef.current.currentTime;
+    console.log(`CurrentTime:${teachingAudioRef.current.currentTime}`);
+    setStopTime(newStopTime);
+    setNowPosition(newStopTime);
+    setEndPosition(newStopTime);
+    setListeningTime((newStopTime - startTime) * 1000);
+    setRecordingTime((newStopTime - startTime) * 1000 * recTimeLength);
+  };
+
+  const listening = async () => {
+    setLastPlayStatus("Listening");
+    teachingAudioRef.current.currentTime = startTime;
+    //console.dir(teachingAudioRef.current)
+    await teachingAudioRef.current.play();
+    //console.log(`ListeningTime:${ListeningTime}`);
+    await sleep(ListeningTime);
+    teachingAudioRef.current.pause();
+    //console.log(`CurrentTime:${teachingAudioRef.current.currentTime}`);
+  };
+
+  const recording = async () => {
+    setLastPlayStatus("Recording");
+    await sleep(200);
+    SE1Ref.current.play();
+    await sleep(1000);
+    recorderRef.current.start();
     await sleep(recordingTime);
-    handleStop(); //録音停止
-    await sleep(1000); //=====!!!!!=====
+    recorderRef.current.stop();
+  };
+
+  const feedbacking = async () => {
+    setLastPlayStatus("Feedbacking");
+    await sleep(200);
+    SE2Ref.current.play();
+    await sleep(1000);
     const recAudio = document.querySelector("#recAudio");
     recAudio.load();
     recAudio.play();
     await sleep(recordingTime);
     recAudio.pause();
+    setLastPlayStatus("Listening");
   };
 
-  //LastPlay複数回リピート
-  const lastPlayStartRepeat = () => {
-    console.log(teachingAudioRef);
-    console.log("1回目のリピート!!");
-    startTimer();
-    lastPlayStart();
-  };
-  const lastPlayStopRepeat = async () => {
-    //stopTimer();
-    setIsLastPlaying(true);
-    await lastPlayStop();
-    console.log(
-      `startTime:${startTime}, stopTime:${stopTime}, recordingTime:${
-        recordingTime / 1000
-      }`
-    );
-    //2回目以降のリピート
+  const lastPlay = async () => {
+    const recAudio = document.querySelector("#recAudio");
+    recAudio.load();
+    await recording();
+    await feedbacking();
     for (let i = 1; i < repeatingCount; i++) {
-      console.log(`${i + 1}回目のリピート!!`);
-      teachingAudioRef.current.currentTime = startTime;
-      await lastPlayStart();
-      await sleep(recordingTime);
-      await lastPlayStop();
+      await listening();
+      await recording();
+      await feedbacking();
     }
-    setStartPosition(endPosition);
+    console.log("LastPlay END");
+    setLastPlayStatus("Listening");
     setIsLastPlaying(false);
+    setLastPlayFlg(false);
   };
 
-  //音源の時間を最初に取得(audioタグのonLoadedMetaDataから呼び出し)
-  const settingTime = () => {
-    setDuration(Math.ceil(teachingAudioRef.current.duration));
+  const handleLastPlayStart = () => {
+    console.log("LastPlay Start");
+    setIsLastPlaying(true);
+    teachingAudioRef.current.play();
+    startTimer();
   };
 
-  //ファイルを複数選択
-  const selectFiles = (e) => {
-    //console.log(e.target.files.length);
-    //console.log(e.target.files);
-    const files = e.target.files;
-    const newPaths = [...teachingAudioPaths];
-    const newNames = [...teachingAudioNames];
-    for (let i = 0; i < files.length; i++) {
-      newPaths.push(URL.createObjectURL(files[i]));
-      newNames.push(files[i].name);
+  const handleLastPlayStop = () => {
+    teachingAudioRef.current.pause();
+    stopTimer();
+    setLastPlayFlg(true);
+  };
+
+  useEffect(() => {
+    if (LastPlayFlg) {
+      console.log(
+        `useEffect!!  startTime:${startTime}, stopTime:${stopTime}, recTime:${recordingTime}, ListenTime:${ListeningTime}`
+      );
+      console.log(
+        `useEffect!! startPosition:${startPosition}, endPosition:${endPosition}, nowPosition:${nowPosition}`
+      );
+      lastPlay();
     }
-    setTeachingAudioPaths(newPaths);
-    setTeachingAudioNames(newNames);
+  }, [LastPlayFlg]);
+
+
+  //reLastPlay
+  const handleReLastPlay = () => {
+    if (endPosition - startPosition !==  0) {
+      setStartTime(startPosition);
+      setRecordingTime(prev => prev * recTimeLength);
+      setIsLastPlaying(true);
+      setIsReLastPlaying(true);
+      setReLastPlayFlg(true);
+    }
+  };
+
+  const reLastPlay = async () => {
+    for (let i = 0; i < repeatingCount; i++) {
+      await listening();
+      await recording();
+      await feedbacking();
+    }
+    setIsLastPlaying(false);
+    setIsReLastPlaying(false);
+    setReLastPlayFlg(false);
+  };
+
+  useEffect(() => {
+    if (ReLastPlayingFlg) {
+      reLastPlay();
+    }
+  }, [ReLastPlayingFlg]);
+
+  //-----LastPlay部分おわり-----
+
+
+
+  //音源の時間を取得(audioタグのonLoadedMetaDataから副作用で呼び出し)
+  const settingTime = () => {
+    console.log("on Loaded Data!!");
+    setDuration(teachingAudioRef.current.duration);
+  };
+
+  const [loadedFlg, setLoadedFlg] = useState(false);
+  const handleLoaded = () => {
+    setLoadedFlg(true);
+  };
+
+  useEffect(() => {
+    if (loadedFlg) {
+      settingTime();
+      setLoadedFlg(false);
+    }
+  }, [loadedFlg]);
+
+  const [playList, setPlayList] = useState([
+    { name: "excuse-me.mp3", path: "./audiomaterial/excuse-me.mp3" },
+  ]);
+  const [teachingAudio, setTeachingAudio] = useState({
+    name: "excuse-me.mp3",
+    path: "./audiomaterial/excuse-me.mp3",
+  });
+  const [sampleAudio, setSampleAudio] = useState({
+    name: "excuse-me.mp3",
+    path: "./audiomaterial/excuse-me.mp3",
+  });
+
+  const handleInputAudio = (e) => {
+    const files = e.target.files;
+    const newAudios = [...playList];
+    for (let i = 0; i < files.length; i++) {
+      newAudios.push({
+        name: files[i].name,
+        path: URL.createObjectURL(files[i]),
+      });
+    }
+    setPlayList(newAudios);
   };
 
   //ファイル選択後にパスなどを更新する
   useEffect(() => {
-    //console.log(`Names: ${teachingAudioNames}`);
-    setTeachingAudioName(teachingAudioNames[0]);
-  }, [teachingAudioNames]);
+    setTeachingAudio(playList[0]);
+  }, [playList]);
 
   useEffect(() => {
-    //console.log(`Paths: ${teachingAudioPaths}`);
-    setTeachingAudioPath(teachingAudioPaths[0]);
-  }, [teachingAudioPaths]);
+    //playListが全て消えた時にsample音源を挿入する
+    if (playList.length === 0) {
+      setTeachingAudio({ name: sampleAudio.name, path: sampleAudio.path });
+    } else {
+      setTeachingAudio({
+        name: playList[playListIndex].name,
+        path: playList[playListIndex].path,
+      });
+    }
+  }, [playList, playListIndex]);
 
-  //path更新後に教材の時間を取得 → テキストに反映
-  useEffect(() => {
-    console.log("副作用レンダリング:path更新後");
-    settingTime();
-  }, [teachingAudioPath]);
 
+  //音源を選択し、setする
+  const handleSelectAudio = (index) => {
+    //console.log(duration);
+    console.log("select audio");
+    resetPosition();
+    setTeachingAudio({
+      name: playList[index].name,
+      path: playList[index].path,
+    });
+    setPlayListIndex(index);
+  };
+
+  //音源をデリートする
+  const handleDeleteAudio = (index) => {
+    console.log("delete audio");
+    const newPlayList = [...playList];
+    window.URL.revokeObjectURL(playList[index].path);
+    newPlayList.splice(index, 1);
+    setPlayList(newPlayList);
+  };
+
+
+  const resetPosition = () => {
+    setStartPosition(0);
+    setEndPosition(0);
+    setNowPosition(0);
+  };
+
+  //次の曲・前の曲へ
+  const handleNextAudio = () => {
+    if (playListIndex !== playList.length - 1) {
+      console.log("go next audio!!");
+      setPlayListIndex(playListIndex + 1);
+      resetPosition();
+    }
+  };
+  const handlePrevAudio = () => {
+    if (teachingAudioRef.current.currentTime !== 0) {
+      teachingAudioRef.current.currentTime = 0;
+      resetPosition();
+    } else if (playListIndex !== 0) {
+      console.log("back prev audio!!");
+      setPlayListIndex(playListIndex - 1);
+      resetPosition();
+    }
+  };
+
+  
   //リピート回数を変更・反映
   const repeatingCountChange = (e) => {
     setRepeatingCount(e.target.value);
@@ -300,20 +447,6 @@ export default function MusicPlayerSlider() {
   //録音時間を変更
   const recTimeLengthChange = (e) => {
     setRecTimeLength(e.target.value);
-  }
-
-  //次の曲・前の曲へ
-  const goNextAudio = () => {
-    console.log("go next audio!!");
-    setPlayListIndex(playListIndex + 1);
-    setTeachingAudioPath(teachingAudioPaths[playListIndex]);
-    setTeachingAudioName(teachingAudioNames[playListIndex]);
-  };
-  const backPreviousAudio = () => {
-    console.log("back prev audio!!");
-    setPlayListIndex(playListIndex - 1);
-    setTeachingAudioPath(teachingAudioPaths[playListIndex]);
-    setTeachingAudioName(teachingAudioNames[playListIndex]);
   };
 
   //音量変更
@@ -335,16 +468,28 @@ export default function MusicPlayerSlider() {
     setEndPosition(newValue);
   };
 
-  //lastPlayを強制停止
-  const handleAllStop = () => {};
+  
+  const handleAudioPlay = () => {
+    const recAudio = document.querySelector("#recAudio");
+    console.dir(recAudio);
+    recAudio.load();
+    recAudio.play();
+  }
 
-  //---------------Testing--------------------------------
+  //教材音声が終了した時の処理
+  const handleEnded = () => {
+    if (isLastPlaying) {
+      handleLastPlayStop();
+      setPaused(!paused);
+    }
+  }
 
+  //UI
   const theme = useTheme();
   const [duration, setDuration] = useState(0);
   const [startPosition, setStartPosition] = useState(0);
   const [endPosition, setEndPosition] = useState(0);
-  const [nowPosition, setNowPosition] = React.useState(0);
+  const [nowPosition, setNowPosition] = useState(0);
   const [paused, setPaused] = useState(true);
   const marks = [
     {
@@ -358,7 +503,7 @@ export default function MusicPlayerSlider() {
   ];
 
   function formatDuration(value) {
-    console.log('format');
+    value = Math.ceil(value);
     const minute = Math.floor(value / 60);
     const secondLeft = Math.ceil(value - minute * 60);
     return `${minute}:${secondLeft < 10 ? `0${secondLeft}` : secondLeft}`;
@@ -375,96 +520,137 @@ export default function MusicPlayerSlider() {
   };
 
   return (
-    <Box sx={{ width: "80%", overflow: "hidden" }}>
-      <Widget>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        "@media screen and (max-width:650px)": {
+          flexFlow: "column",
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: "60%",
+          padding: "16px 48px",
+          display: "flex",
+          justifyContent: "center",
+          flexFlow: "column",
+          "@media screen and (max-width:650px)": {
+            width: "80%",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            height: "140px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <LastPlayIcon props={LastPlayStatus} />
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {/*<AudiotrackIcon sx={{mr: 1}}/>*/}
           <Typography
             noWrap
             letterSpacing={-0.25}
-            sx={{ margin: "auto", textAlign: "center" }}
+            sx={{ textAlign: "center", fontSize: "20px" }}
           >
-            {teachingAudioName || "excuseme.mp3"}
+            {teachingAudio.name}
           </Typography>
         </Box>
-        
 
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            mt: 2,
           }}
         >
           <TinyText>{formatDuration(nowPosition)}</TinyText>
           <TinyText>-{formatDuration(duration - nowPosition)}</TinyText>
         </Box>
         <Slider
-            aria-label="time-indicator"
-            size="small"
-            value={nowPosition}
-            marks={marks}
-            min={0}
-            step={1}
-            max={duration}
-            onChange={handleSliderChange}
-            disabled={isLastPlaying ? true : false}
-            sx={{
-              color:
-                theme.palette.mode === "dark" ? "#fff" : "rgba(0,0,0,0.87)",
-              height: 4,
-              mt: -1,
-              
-              "& .MuiSlider-thumb": {
-                width: 8,
-                height: 8,
-                transition: "0.3s cubic-bezier(.47,1.64,.41,.8)",
-                "&:before": {
-                  boxShadow: "0 2px 12px 0 rgba(0,0,0,0.4)",
-                },
-                "&:hover, &.Mui-focusVisible": {
-                  boxShadow: `0px 0px 0px 8px ${
-                    theme.palette.mode === "dark"
-                      ? "rgb(255 255 255 / 16%)"
-                      : "rgb(0 0 0 / 16%)"
-                  }`,
-                },
-                "&.Mui-active": {
-                  width: 20,
-                  height: 20,
-                },
+          aria-label="time-indicator"
+          size="small"
+          value={nowPosition}
+          marks={marks}
+          min={0}
+          step={0.1}
+          max={duration}
+          onChange={handleSliderChange}
+          disabled={isLastPlaying ? true : false}
+          sx={{
+            color: theme.palette.mode === "dark" ? "#fff" : "rgba(0,0,0,0.87)",
+            height: 4,
+            mt: -1,
+
+            "& .MuiSlider-thumb": {
+              width: 8,
+              height: 8,
+              transition: "0.3s cubic-bezier(.47,1.64,.41,.8)",
+              "&:before": {
+                boxShadow: "0 2px 12px 0 rgba(0,0,0,0.4)",
               },
-              "& .MuiSlider-rail": {
-                opacity: 0.28,
+              "&:hover, &.Mui-focusVisible": {
+                boxShadow: `0px 0px 0px 8px ${
+                  theme.palette.mode === "dark"
+                    ? "rgb(255 255 255 / 16%)"
+                    : "rgb(0 0 0 / 16%)"
+                }`,
               },
-            }}
-          />
+              "&.Mui-active": {
+                width: 20,
+                height: 20,
+              },
+            },
+            "& .MuiSlider-rail": {
+              opacity: 0.28,
+            },
+          }}
+        />
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mt: -2,
+            mt: -1,
           }}
         >
           <IconButton
             aria-label="previous song"
-            onClick={backPreviousAudio}
+            onClick={handlePrevAudio}
             disabled={isLastPlaying ? true : false}
           >
             <FastRewindRounded fontSize="large" htmlColor={mainIconColor} />
           </IconButton>
           <IconButton
-            aria-label={paused ? "play" : "pause"}
+            aria-label="repeat Last Play"
+            onClick={handleReLastPlay}
             disabled={isLastPlaying ? true : false}
+          >
+            <LoopIcon fontSize="large" htmlColor={mainIconColor} />
+          </IconButton>
+          <IconButton
+            aria-label={paused ? "play" : "pause"}
+            disabled={LastPlayFlg || isReLastPlaying ? true : false}
             onClick={
               paused
                 ? () => {
-                    lastPlayStartRepeat();
+                    handleLastPlayStart();
                     setPaused(!paused);
                   }
                 : () => {
-                    lastPlayStopRepeat();
+                    handleLastPlayStop();
                     setPaused(!paused);
                   }
             }
@@ -483,16 +669,17 @@ export default function MusicPlayerSlider() {
           </IconButton>
           <IconButton
             aria-label="next song"
-            onClick={goNextAudio}
+            onClick={handleNextAudio}
             disabled={isLastPlaying ? true : false}
           >
             <FastForwardRounded fontSize="large" htmlColor={mainIconColor} />
           </IconButton>
         </Box>
+        {/*<button onClick={handleAudioPlay}>start</button>*/}
         <Stack
           spacing={2}
           direction="row"
-          sx={{ mb: 1, px: 1 }}
+          sx={{ mt: 1, mb: 1, px: 1 }}
           alignItems="center"
         >
           <VolumeDownRounded htmlColor={lightIconColor} />
@@ -555,86 +742,123 @@ export default function MusicPlayerSlider() {
           />
           <MicIcon htmlColor={lightIconColor} />
         </Stack>
-        <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
-          <InputLabel id="repeatTimes">リピート回数</InputLabel>
-          <Select
-            labelId="repeatTimes"
-            id="repeatTimes"
-            value={repeatingCount}
-            label="repeat"
-            onChange={repeatingCountChange}
-            disabled={isLastPlaying ? true : false}
-          >
-            <MenuItem value={1}>1</MenuItem>
-            <MenuItem value={2}>2</MenuItem>
-            <MenuItem value={3}>3</MenuItem>
-            <MenuItem value={4}>4</MenuItem>
-            <MenuItem value={5}>5</MenuItem>
-            <MenuItem value={10}>10</MenuItem>
-          </Select>
-        </FormControl>
 
-        <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
-          <InputLabel id="recTimeLength">録音時間</InputLabel>
-          <Select
-            labelId="recTimeLength"
-            id="recTimeLength"
-            value={recTimeLength}
-            label="repeat"
-            onChange={recTimeLengthChange}
-            disabled={isLastPlaying ? true : false}
-          >
-            <MenuItem value={0.7}>× 0.7</MenuItem>
-            <MenuItem value={0.8}>× 0.8</MenuItem>
-            <MenuItem value={0.9}>× 0.9</MenuItem>
-            <MenuItem value={1.0}>× 1.0</MenuItem>
-            <MenuItem value={1.1}>× 1.1</MenuItem>
-            <MenuItem value={1.2}>× 1.2</MenuItem>
-            <MenuItem value={1.3}>× 1.3</MenuItem>
-            <MenuItem value={1.4}>× 1.4</MenuItem>
-            <MenuItem value={1.5}>× 1.5</MenuItem>
-          </Select>
-        </FormControl>
+        <Box mt={1}>
+          <FormControl sx={{ m: 1, width: 150 }} size="small">
+            <InputLabel id="repeatTimes">リピート回数</InputLabel>
+            <Select
+              labelId="repeatTimes"
+              id="repeatTimes"
+              value={repeatingCount}
+              label="repeat"
+              onChange={repeatingCountChange}
+              disabled={isLastPlaying ? true : false}
+            >
+              <MenuItem value={1}>1</MenuItem>
+              <MenuItem value={2}>2</MenuItem>
+              <MenuItem value={3}>3</MenuItem>
+              <MenuItem value={4}>4</MenuItem>
+              <MenuItem value={5}>5</MenuItem>
+              <MenuItem value={10}>10</MenuItem>
+            </Select>
+          </FormControl>
 
+          <FormControl sx={{ m: 1, width: 150 }} size="small">
+            <InputLabel id="recTimeLength">録音時間</InputLabel>
+            <Select
+              labelId="recTimeLength"
+              id="recTimeLength"
+              value={recTimeLength}
+              label="repeat"
+              onChange={recTimeLengthChange}
+              disabled={isLastPlaying ? true : false}
+            >
+              <MenuItem value={0.7}>× 0.7</MenuItem>
+              <MenuItem value={0.8}>× 0.8</MenuItem>
+              <MenuItem value={0.9}>× 0.9</MenuItem>
+              <MenuItem value={1.0}>× 1.0</MenuItem>
+              <MenuItem value={1.1}>× 1.1</MenuItem>
+              <MenuItem value={1.2}>× 1.2</MenuItem>
+              <MenuItem value={1.3}>× 1.3</MenuItem>
+              <MenuItem value={1.4}>× 1.4</MenuItem>
+              <MenuItem value={1.5}>× 1.5</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          width: "40%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexFlow: "column",
+          "@media screen and (max-width:650px)": {
+            width: "100%",
+          },
+        }}
+      >
         <Button variant="contained" component="label" size="large">
           <AddIcon />
           教材を選択
           <input
             hidden
-            accept="audio/*"
             multiple
             type="file"
-            onChange={selectFiles}
+            onChange={handleInputAudio}
             ref={inputRef}
           />
         </Button>
-
         <List sx={style} component="nav" aria-label="playList">
-          <ListItem button>
-            <ListItemText primary={teachingAudioNames[0] || " - "} />
-          </ListItem>
-          <Divider />
-          <ListItem button divider>
-            <ListItemText primary={teachingAudioNames[1] || " - "} />
-          </ListItem>
-          <ListItem button>
-            <ListItemText primary={teachingAudioNames[2] || " - "} />
-          </ListItem>
-          <Divider light />
-          <ListItem button>
-            <ListItemText primary={teachingAudioNames[3] || " - "} />
-          </ListItem>
+          {[0, 1, 2, 3, 4].map((value) => {
+            const labelId = `checkbox-list-secondary-label-${value}`;
+            return (
+              <ListItem
+                key={value}
+                secondaryAction={
+                  <IconButton
+                    edge="end"
+                    aria-label="delete"
+                    onClick={() => handleDeleteAudio(value)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                }
+                disablePadding
+                divider
+              >
+                <ListItemButton onClick={() => handleSelectAudio(value)}>
+                  <AudiotrackIcon sx={{ mr: 1 }} />
+                  <ListItemText
+                    id={labelId}
+                    primary={playList[value]?.name || " - "}
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
         </List>
-      </Widget>
-
+      </Box>
       <audio
         id="teachingAudio"
-        src={teachingAudioPath || "./audiomaterial/excuseme.mp3"}
-        onLoadedMetadata={settingTime}
+        onLoadedMetadata={handleLoaded}
+        onEnded={handleEnded}
+        src={teachingAudio.path}
         ref={teachingAudioRef}
+        volume={0.4}
       ></audio>
       <audio id="recAudio"></audio>
-      <audio src="./curry.mp3" controls></audio>
+      <audio
+        id="SE1"
+        src="./audiomaterial/Onoma-Pop03-3(Low).mp3"
+        ref={SE1Ref}
+      ></audio>
+      <audio
+        id="SE2"
+        src="./audiomaterial/Onoma-Pop03-1(High).mp3"
+        ref={SE2Ref}
+      ></audio>
     </Box>
   );
 }
