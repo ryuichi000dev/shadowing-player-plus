@@ -10,8 +10,8 @@ import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import LoopIcon from '@mui/icons-material/Loop';
+import { Link } from '@mui/material';
 
-const pages = ['Guide', 'Contact'];
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
@@ -34,7 +34,7 @@ function ResponsiveAppBar() {
             variant="h6"
             noWrap
             component="a"
-            href="/"
+            href="https://github.com/ryuichi000dev/shadowing-player-plus"
             sx={{
               mr: 2,
               display: { md: 'flex' },
@@ -78,25 +78,33 @@ function ResponsiveAppBar() {
                 display: { xs: 'block', md: 'none' },
               }}
             >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
+                <MenuItem key="guide"  onClick={handleCloseNavMenu}>
+                  <Link textAlign="center" href="https://github.com/ryuichi000dev/shadowing-player-plus" underline="none" rel="noopener">GUIDE</Link>
                 </MenuItem>
-              ))}
+                <MenuItem key="contact" onClick={handleCloseNavMenu}>
+                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSemLQM2k4yI9ja_9tRce6_lBViPnTQas2907gRlWh5zipHKHA/viewform?usp=sf_link" underline="none">CONTACT</Link>
+                </MenuItem>
             </Menu>
           </Box>
           
           
           <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' }, justifyContent: "end" }}>
-            {pages.map((page) => (
               <Button
-                key={page}
+                key="guide"
                 onClick={handleCloseNavMenu}
                 sx={{ my: 2, color: 'white', display: 'block' }}
+                href="https://github.com/ryuichi000dev/shadowing-player-plus"
               >
-                {page}
+                GUIDE
               </Button>
-            ))}
+              <Button
+                key="contact"
+                onClick={handleCloseNavMenu}
+                sx={{ my: 2, color: 'white', display: 'block' }}
+                href="https://docs.google.com/forms/d/e/1FAIpQLSemLQM2k4yI9ja_9tRce6_lBViPnTQas2907gRlWh5zipHKHA/viewform?usp=sf_link"
+              >
+                CONTACT
+              </Button>
           </Box>
 
         </Toolbar>
