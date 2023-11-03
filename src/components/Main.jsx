@@ -801,7 +801,7 @@ export default function MusicPlayerSlider() {
       >
         <Button variant="contained" component="label" size="large">
           <AddIcon />
-          教材を選択
+          教材選択
           <input
             hidden
             multiple
